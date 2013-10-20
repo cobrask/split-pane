@@ -24,6 +24,7 @@ https://raw.github.com/shagstrom/split-pane/master/LICENSE
 	};
 
 	var SPLITPANERESIZE_HANDLER = '_splitpaneparentresizeHandler';
+	var SPLITPANERESIZE_DIFF = 5;
 
 	/**
 	 * A special event that will "capture" a resize event from the parent split-pane or window.
@@ -65,12 +66,12 @@ https://raw.github.com/shagstrom/split-pane/master/LICENSE
 
 	function mousedownHandler(event) {
 		event.preventDefault();
-		var $resizeShim = $(this).siblings('.split-pane-resize-shim').show(),
-			mousemove = createMousemove($(this).parent(), event.pageX, event.pageY);
+		var $resizeShim = $(this).siblings('.split-pane-resize-shim')
+        var mousemove = createMousemove($(this).parent(), event.pageX, event.pageY, $resizeShim);
 		$(document).mousemove(mousemove);
 		$(document).one('mouseup', function(event) {
-			$(document).unbind('mousemove', mousemove);
-			$resizeShim.hide();
+		    $(document).unbind('mousemove', mousemove);
+		    $resizeShim.hide();
 		});
 	}
 
@@ -134,7 +135,7 @@ https://raw.github.com/shagstrom/split-pane/master/LICENSE
 		}
 	}
 
-	function createMousemove($splitPane, pageX, pageY) {
+	function createMousemove($splitPane, pageX, pageY, shim) {
 		var $firstComponent = $splitPane.children('.split-pane-component:first'),
 			$divider = $splitPane.children('.split-pane-divider'),
 			$lastComponent = $splitPane.children('.split-pane-component:last');
@@ -142,57 +143,75 @@ https://raw.github.com/shagstrom/split-pane/master/LICENSE
 			var firstComponentMinHeight =  minHeight($firstComponent),
 				maxFirstComponentHeight = $splitPane.height() - minHeight($lastComponent) - $divider.height(),
 				topOffset = $divider.position().top - pageY;
-			return function(event) {
-				event.preventDefault();
-				var top = Math.min(Math.max(firstComponentMinHeight, topOffset + event.pageY), maxFirstComponentHeight);
-				setTop($splitPane, $firstComponent, $divider, $lastComponent, top + 'px')
+			return function (event) {
+			    if (Math.abs(event.pageY - pageY) >= SPLITPANERESIZE_DIFF) {
+			        shim.show();
+			        event.preventDefault();
+			        var top = Math.min(Math.max(firstComponentMinHeight, topOffset + event.pageY), maxFirstComponentHeight);
+			        setTop($splitPane, $firstComponent, $divider, $lastComponent, top + 'px')
+			    }
 			};
 		} else if ($splitPane.is('.fixed-bottom')) {
 			var lastComponentMinHeight = minHeight($lastComponent),
 				maxLastComponentHeight = $splitPane.height() - minHeight($firstComponent) - $divider.height(),
 				bottomOffset = $lastComponent.height() + pageY;
-			return function(event) {
-				event.preventDefault();
-				var bottom = Math.min(Math.max(lastComponentMinHeight, bottomOffset - event.pageY), maxLastComponentHeight);
-				setBottom($splitPane, $firstComponent, $divider, $lastComponent, bottom + 'px');
+			return function (event) {
+			    if (Math.abs(event.pageY - pageY) >= SPLITPANERESIZE_DIFF) {
+			        shim.show();
+			        event.preventDefault();
+			        var bottom = Math.min(Math.max(lastComponentMinHeight, bottomOffset - event.pageY), maxLastComponentHeight);
+			        setBottom($splitPane, $firstComponent, $divider, $lastComponent, bottom + 'px');
+			    }
 			};
 		} else if ($splitPane.is('.horizontal-percent')) {
 			var splitPaneHeight = $splitPane.height(),
 				lastComponentMinHeight = minHeight($lastComponent),
 				maxLastComponentHeight = splitPaneHeight - minHeight($firstComponent) - $divider.height(),
 				bottomOffset = $lastComponent.height() + pageY;
-			return function(event) {
-				event.preventDefault();
-				var bottom = Math.min(Math.max(lastComponentMinHeight, bottomOffset - event.pageY), maxLastComponentHeight);
-				setBottom($splitPane, $firstComponent, $divider, $lastComponent, (bottom / splitPaneHeight * 100) + '%');
+			return function (event) {
+			    event.preventDefault();
+			    if (Math.abs(event.pageY - pageY) >= SPLITPANERESIZE_DIFF) {
+			        shim.show();
+			        var bottom = Math.min(Math.max(lastComponentMinHeight, bottomOffset - event.pageY), maxLastComponentHeight);
+			        setBottom($splitPane, $firstComponent, $divider, $lastComponent, (bottom / splitPaneHeight * 100) + '%');
+			    }
 			};
 		} else if ($splitPane.is('.fixed-left')) {
 			var firstComponentMinWidth = minWidth($firstComponent),
 				maxFirstComponentWidth = $splitPane.width() - minWidth($lastComponent) - $divider.width(),
 				leftOffset = $divider.position().left - pageX;
 			return function(event) {
-				event.preventDefault();
-				var left = Math.min(Math.max(firstComponentMinWidth, leftOffset + event.pageX), maxFirstComponentWidth);
-				setLeft($splitPane, $firstComponent, $divider, $lastComponent, left + 'px')
+			    if (Math.abs(event.pageX - pageX) >= SPLITPANERESIZE_DIFF) {
+			        shim.show();
+			        event.preventDefault();
+			        var left = Math.min(Math.max(firstComponentMinWidth, leftOffset + event.pageX), maxFirstComponentWidth);
+			        setLeft($splitPane, $firstComponent, $divider, $lastComponent, left + 'px')
+			    }
 			};
 		} else if ($splitPane.is('.fixed-right')) {
 			var lastComponentMinWidth = minWidth($lastComponent),
 				maxLastComponentWidth = $splitPane.width() - minWidth($firstComponent) - $divider.width(),
 				rightOffset = $lastComponent.width() + pageX;
-			return function(event) {
-				event.preventDefault();
-				var right = Math.min(Math.max(lastComponentMinWidth, rightOffset - event.pageX), maxLastComponentWidth);
-				setRight($splitPane, $firstComponent, $divider, $lastComponent, right + 'px');
+			return function (event) {
+			    if (Math.abs(event.pageX - pageX) >= SPLITPANERESIZE_DIFF) {
+			        shim.show();
+			        event.preventDefault();
+			        var right = Math.min(Math.max(lastComponentMinWidth, rightOffset - event.pageX), maxLastComponentWidth);
+			        setRight($splitPane, $firstComponent, $divider, $lastComponent, right + 'px');
+			    }
 			};
 		} else if ($splitPane.is('.vertical-percent')) {
 			var splitPaneWidth = $splitPane.width(),
 				lastComponentMinWidth = minWidth($lastComponent),
 				maxLastComponentWidth = splitPaneWidth - minWidth($firstComponent) - $divider.width(),
 				rightOffset = $lastComponent.width() + pageX;
-			return function(event) {
-				event.preventDefault();
-				var right = Math.min(Math.max(lastComponentMinWidth, rightOffset - event.pageX), maxLastComponentWidth);
-				setRight($splitPane, $firstComponent, $divider, $lastComponent, (right / splitPaneWidth * 100) + '%');
+			return function (event) {
+			    if (Math.abs(event.pageX - pageX) >= SPLITPANERESIZE_DIFF) {
+			        shim.show();
+			        event.preventDefault();
+			        var right = Math.min(Math.max(lastComponentMinWidth, rightOffset - event.pageX), maxLastComponentWidth);
+			        setRight($splitPane, $firstComponent, $divider, $lastComponent, (right / splitPaneWidth * 100) + '%');
+			    }
 			};
 		}
 	}
